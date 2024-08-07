@@ -80,7 +80,6 @@ def parse_pnml(pnml_file):
         }
         place_data.append(data)
     print(place_data)
-
     # parse the arcs
     arc_data = []  
     for arc in root.findall('.//pnml:arc', namespaces=namespace):
@@ -110,8 +109,43 @@ def parse_pnml(pnml_file):
         arc_data.append(data)
     print(arc_data)
 
+    return transtion_data, place_data, arc_data
 
+# Generate the code for the SLCO variables using the place data parsed from the PNML file
+def generate_slco_variables(place_data):
+    variable_statements = []
+    for place in place_data:
+        variable_name = place['place_id']
+        initial_marking = place['place_initial_marking']
+        variable_statement = f"Integer {variable_name} := {initial_marking}"
+        variable_statements.append(variable_statement)
+    return ", ".join(variable_statements)
 
+# Generate the code for the SLCO state machines using the transition and arc data parsed from the PNML file
+def generate_slco_state_machines(transition_data, arc_data):
+    pass
+
+# Generate the code for the SLCO model
+def generate_slco_model(model_name, place_data, state_machines):
+    slco_template = """model %s {
+  classes
+    GlobalClass {
+      variables
+        %s
+	  
+      state machines
+        SM { 
+            initial fire states 
+            transitions
+                %s
+	}
+
+  objects
+    globalObject : GlobalClass()
+}
+"""
+    variables_statement = generate_slco_variables(place_data)
+    return slco_template % (model_name, variables_statement, state_machines)
 
 
 
@@ -120,4 +154,5 @@ if __name__ == "__main__":
         print("Usage: python script.py <pnml_file>")
         sys.exit(1)
     pnml_file = sys.argv[1]
-    parse_pnml(pnml_file)
+    _, data,_ = parse_pnml(pnml_file)
+    print(generate_slco_model("PetriNetModel", data, []))
