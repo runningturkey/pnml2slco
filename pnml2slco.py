@@ -54,7 +54,7 @@ def parse_pnml(pnml_file):
             'transition_name': name_text
         }
         transtion_data.append(data)
-    print(transtion_data)
+    # print(transtion_data)
 
     # parse the places
     place_data = []
@@ -79,7 +79,8 @@ def parse_pnml(pnml_file):
             'place_initial_marking': initial_marking_text
         }
         place_data.append(data)
-    print(place_data)
+    # print(place_data)
+
     # parse the arcs
     arc_data = []  
     for arc in root.findall('.//pnml:arc', namespaces=namespace):
@@ -107,9 +108,62 @@ def parse_pnml(pnml_file):
             'arc_inscription': inscription_text
         }
         arc_data.append(data)
-    print(arc_data)
+    # print(arc_data)
 
     return transtion_data, place_data, arc_data
+
+# Generate the sum-up information for each transition using the parsed transition and arc data from the pnml file
+# This fnction can organize the transition data for further use in the step of generating the SLCO code
+def generate_transition_inf(transition_data, place_data, arc_data):
+    transition_analysis = {}
+
+    # Initialize transition information
+    for transition in transition_data:
+        transition_id = transition['transition_id']
+        transition_analysis[transition_id] = {
+            'transition_name': transition['transition_name'],
+            'input_arcs': [],
+            'output_arcs': []
+        }
+
+    # Initialize place information
+    place_info = {}
+    for place in place_data:
+        place_id = place['place_id']
+        place_info[place_id] = {
+            'place_name': place['place_name'],
+            'place_initial_marking': place['place_initial_marking']
+        }
+
+    # start finding corresponding information in the arc data
+    for arc in arc_data:
+        arc_id = arc['arc_id']
+        arc_source = arc['arc_source']
+        arc_target = arc['arc_target']
+        arc_inscription = arc['arc_inscription']
+        
+        # find input arcs and input places for transition
+        if arc_target in transition_analysis:
+            transition_analysis[arc_target]['input_arcs'].append({
+                'input_arc_id': arc_id,
+                'input_place_id': arc_source,
+                #'input_place_name': place_info[arc_source]['place_name'], # may not used
+                #'input_place_initial_marking': place_info[arc_source]['place_initial_marking'], #may not used
+                'input_arc_inscription': arc_inscription
+            })
+        
+        # find output arcs and output place for transition
+        if arc_source in transition_analysis:
+            transition_analysis[arc_source]['output_arcs'].append({
+                'output_arc_id': arc_id,
+                'output_place_id': arc_target,
+                #'output_place_name': place_info[arc_target]['place_name'],
+                #'output_place_initial_marking': place_info[arc_target]['place_initial_marking'],
+                'output_arc_inscription': arc_inscription
+            })
+    
+    
+    return transition_analysis
 
 # Generate the code for the SLCO variables using the place data parsed from the PNML file
 def generate_slco_variables(place_data):
@@ -121,12 +175,39 @@ def generate_slco_variables(place_data):
         variable_statements.append(variable_statement)
     return ", ".join(variable_statements)
 
-# Generate the code for the SLCO state machines using the transition and arc data parsed from the PNML file
-def generate_slco_state_machines(transition_data, arc_data):
-    pass
+# Generate the code for the SLCO state machines using the organized transition information using function 'generate_transition_inf'
+def generate_slco_tansitions(transition_data, place_data, arc_data):
+
+    transition_analysis = generate_transition_inf(transition_data, place_data, arc_data)
+
+    result_codes = []
+
+    for _, details in transition_analysis.items():
+        input_conditions = []
+        input_updates = []
+        output_updates = []
+
+        for input_arc in details['input_arcs']:
+            input_place_id = input_arc['input_place_id']
+            input_inscription = input_arc['input_arc_inscription']
+            input_conditions.append(f"{input_place_id} > 0")
+            input_updates.append(f"{input_place_id} := {input_place_id} - {input_inscription}")
+
+        for output_arc in details['output_arcs']:
+            output_place_id = output_arc['output_place_id']
+            output_inscription = output_arc['output_arc_inscription']
+            output_updates.append(f"{output_place_id} := {output_place_id} + {output_inscription}")
+
+        condition_str = " and ".join(input_conditions)
+        update_str = "; ".join(input_updates + output_updates)
+
+        update_code = f"update -> update {{[{condition_str}; {update_str}]}}"
+        result_codes.append(update_code)
+
+    return "\n                ".join(result_codes)
 
 # Generate the code for the SLCO model
-def generate_slco_model(model_name, place_data, state_machines):
+def generate_slco_model(model_name, transition_data, place_data, arc_data):
     slco_template = """model %s {
   classes
     GlobalClass {
@@ -135,17 +216,19 @@ def generate_slco_model(model_name, place_data, state_machines):
 	  
       state machines
         SM { 
-            initial fire states 
+            initial update states 
             transitions
                 %s
+        }
 	}
 
   objects
     globalObject : GlobalClass()
 }
 """
-    variables_statement = generate_slco_variables(place_data)
-    return slco_template % (model_name, variables_statement, state_machines)
+    variables_statements = generate_slco_variables(place_data)
+    state_machine_statements = generate_slco_tansitions(transition_data, place_data, arc_data)
+    return slco_template % (model_name, variables_statements, state_machine_statements)
 
 
 
@@ -154,5 +237,5 @@ if __name__ == "__main__":
         print("Usage: python script.py <pnml_file>")
         sys.exit(1)
     pnml_file = sys.argv[1]
-    _, data,_ = parse_pnml(pnml_file)
-    print(generate_slco_model("PetriNetModel", data, []))
+    transtion_data, place_data, arc_data = parse_pnml(pnml_file)
+    print(generate_slco_model("PetriNetModel", transtion_data, place_data, arc_data))

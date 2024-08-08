@@ -1,0 +1,85 @@
+def analyze_arcs(transitions, places, arcs):
+    transition_analysis = {}
+
+    for transition in transitions:
+        transition_id = transition['transition_id']
+        transition_analysis[transition_id] = {
+            'transition_name': transition['transition_name'],
+            'input_arcs': [],
+            'output_arcs': []
+        }
+
+    for arc in arcs:
+        arc_source = arc['arc_source']
+        arc_target = arc['arc_target']
+        arc_inscription = arc['arc_inscription']
+        
+        if arc_target in transition_analysis:
+            transition_analysis[arc_target]['input_arcs'].append({
+                'arc_id': arc['arc_id'],
+                'arc_source': arc_source,
+                'arc_inscription': arc_inscription
+            })
+        
+        if arc_source in transition_analysis:
+            transition_analysis[arc_source]['output_arcs'].append({
+                'arc_id': arc['arc_id'],
+                'arc_target': arc_target,
+                'arc_inscription': arc_inscription
+            })
+    
+    return transition_analysis
+
+# Sample input
+transitions = [{'transition_id': 'GetK', 'transition_name': 'GetK'}, 
+               {'transition_id': 'GetB', 'transition_name': 'GetB'}, 
+               {'transition_id': 'RelK', 'transition_name': 'RelK'}, 
+               {'transition_id': 'GetK2', 'transition_name': 'GetK2'}, 
+               {'transition_id': 'RBag', 'transition_name': 'RBag'}, 
+               {'transition_id': 'RKey', 'transition_name': 'RKey'}, 
+               {'transition_id': 'Enter', 'transition_name': 'Enter'}]
+
+places = [{'place_id': 'Entered', 'place_name': 'Entered', 'place_initial_marking': '0'}, 
+          {'place_id': 'WaitBag', 'place_name': 'WaitBag', 'place_initial_marking': '0'}, 
+          {'place_id': 'Undress', 'place_name': 'Undress', 'place_initial_marking': '0'}, 
+          {'place_id': 'InBath', 'place_name': 'InBath', 'place_initial_marking': '0'}, 
+          {'place_id': 'Dress', 'place_name': 'Dress', 'place_initial_marking': '0'}, 
+          {'place_id': 'Dressed', 'place_name': 'Dressed', 'place_initial_marking': '0'}, 
+          {'place_id': 'Out', 'place_name': 'Out', 'place_initial_marking': '20'}, 
+          {'place_id': 'Cabins', 'place_name': 'Cabins', 'place_initial_marking': '10'}, 
+          {'place_id': 'Bags', 'place_name': 'Bags', 'place_initial_marking': '15'}]
+
+arcs = [{'arc_id': 'cId901051587913946698728', 'arc_source': 'Dressed', 'arc_target': 'RKey', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId901051587913946698718', 'arc_source': 'Entered', 'arc_target': 'GetK', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317929', 'arc_source': 'RKey', 'arc_target': 'Out', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317919', 'arc_source': 'GetK', 'arc_target': 'WaitBag', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317930', 'arc_source': 'Out', 'arc_target': 'Enter', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317920', 'arc_source': 'WaitBag', 'arc_target': 'GetB', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317931', 'arc_source': 'Enter', 'arc_target': 'Entered', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317921', 'arc_source': 'GetB', 'arc_target': 'Undress', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317933', 'arc_source': 'RelK', 'arc_target': 'Cabins', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317922', 'arc_source': 'Undress', 'arc_target': 'RelK', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317934', 'arc_source': 'Cabins', 'arc_target': 'GetK2', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317923', 'arc_source': 'RelK', 'arc_target': 'InBath', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317935', 'arc_source': 'RKey', 'arc_target': 'Cabins', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317924', 'arc_source': 'InBath', 'arc_target': 'GetK2', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317936', 'arc_source': 'Bags', 'arc_target': 'GetB', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317925', 'arc_source': 'GetK2', 'arc_target': 'Dress', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317937', 'arc_source': 'RBag', 'arc_target': 'Bags', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317926', 'arc_source': 'Dress', 'arc_target': 'RBag', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317948', 'arc_source': 'Cabins', 'arc_target': 'GetK', 'arc_inscription': '1'}, 
+        {'arc_id': 'cId900390594197776317927', 'arc_source': 'RBag', 'arc_target': 'Dressed', 'arc_inscription': '1'}]
+
+# Analyze the arcs and print the results
+result = analyze_arcs(transitions, places, arcs)
+
+for transition_id, details in result.items():
+    print(f"Transition ID: {transition_id}")
+    print(f"Transition Name: {details['transition_name']}")
+    print("Input Arcs:")
+    for arc in details['input_arcs']:
+        print(f"  Arc ID: {arc['arc_id']}, Source: {arc['arc_source']}, Inscription: {arc['arc_inscription']}")
+    print("Output Arcs:")
+    for arc in details['output_arcs']:
+        print(f"  Arc ID: {arc['arc_id']}, Target: {arc['arc_target']}, Inscription: {arc['arc_inscription']}")
+    print()
