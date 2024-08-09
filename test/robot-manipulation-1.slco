@@ -1,0 +1,27 @@
+model PetriNetModel {
+  classes
+    GlobalClass {
+      variables
+        Integer initialize := 0, Integer move := 0, Integer moved := 0, Integer off := 0, Integer r_stopped := 2, Integer r_active := 0, Integer r_moving := 0, Integer p_rdy := 0, Integer p_sc := 0, Integer p_m := 0, Integer p_rel := 0, Integer access := 2, Integer p_i1 := 3, Integer initialized := 0, Integer p_i2 := 0
+	  
+      state machines
+        SM { 
+            initial update states 
+            transitions
+                update -> update {[r_stopped > 0 and initialize > 0; r_stopped := r_stopped - 1; initialize := initialize - 1; r_active := r_active + 1; initialized := initialized + 1]}
+                update -> update {[move > 0 and r_active > 0; move := move - 1; r_active := r_active - 1; r_moving := r_moving + 1]}
+                update -> update {[r_moving > 0; r_moving := r_moving - 1; moved := moved + 1; r_active := r_active + 1]}
+                update -> update {[r_active > 0 and off > 0; r_active := r_active - 1; off := off - 1; r_stopped := r_stopped + 1]}
+                update -> update {[p_rdy > 0 and access > 0; p_rdy := p_rdy - 1; access := access - 1; p_sc := p_sc + 1]}
+                update -> update {[p_sc > 0; p_sc := p_sc - 1; p_m := p_m + 1; move := move + 1]}
+                update -> update {[p_m > 0 and moved > 0; p_m := p_m - 1; moved := moved - 1; p_rel := p_rel + 1]}
+                update -> update {[p_rdy > 0; p_rdy := p_rdy - 1; off := off + 1; p_i1 := p_i1 + 1]}
+                update -> update {[p_rel > 0; p_rel := p_rel - 1; access := access + 1; p_rdy := p_rdy + 1]}
+                update -> update {[p_i1 > 0; p_i1 := p_i1 - 1; initialize := initialize + 1; p_i2 := p_i2 + 1]}
+                update -> update {[p_i2 > 0 and initialized > 0; p_i2 := p_i2 - 1; initialized := initialized - 1; p_rdy := p_rdy + 1]}
+        }
+	}
+
+  objects
+    globalObject : GlobalClass()
+}

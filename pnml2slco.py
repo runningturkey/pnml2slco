@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 import sys
+import os
 
 def validate_pnml(pnml_tree):
     root = pnml_tree.getroot()
@@ -230,6 +231,9 @@ def generate_slco_model(model_name, transition_data, place_data, arc_data):
     state_machine_statements = generate_slco_tansitions(transition_data, place_data, arc_data)
     return slco_template % (model_name, variables_statements, state_machine_statements)
 
+def save_to_file(filename, content):
+    with open(filename, 'w') as file:
+        file.write(content)
 
 
 if __name__ == "__main__":
@@ -238,4 +242,9 @@ if __name__ == "__main__":
         sys.exit(1)
     pnml_file = sys.argv[1]
     transtion_data, place_data, arc_data = parse_pnml(pnml_file)
-    print(generate_slco_model("PetriNetModel", transtion_data, place_data, arc_data))
+    slco_content = generate_slco_model("PetriNetModel", transtion_data, place_data, arc_data)
+
+    # Generate the output filename
+    output_filename = os.path.splitext(pnml_file)[0] + '.slco'
+    save_to_file(output_filename, slco_content)
+    print(f"SLCO model saved to {output_filename}")

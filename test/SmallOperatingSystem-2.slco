@@ -1,0 +1,24 @@
+model PetriNetModel {
+  classes
+    GlobalClass {
+      variables
+        Integer TaskOnDisk := 32, Integer FreeMemSegment := 32, Integer DiskControllerUnit := 8, Integer TransferToDisk := 0, Integer TaskReady := 0, Integer TaskSuspended := 0, Integer CPUUnit := 16, Integer ExecutingTask := 0, Integer LoadingMem := 0
+	  
+      state machines
+        SM { 
+            initial update states 
+            transitions
+                update -> update {[TaskOnDisk > 0 and FreeMemSegment > 0 and DiskControllerUnit > 0; TaskOnDisk := TaskOnDisk - 1; FreeMemSegment := FreeMemSegment - 1; DiskControllerUnit := DiskControllerUnit - 1; LoadingMem := LoadingMem + 1]}
+                update -> update {[LoadingMem > 0; LoadingMem := LoadingMem - 1; TaskReady := TaskReady + 1; DiskControllerUnit := DiskControllerUnit + 1; TaskOnDisk := TaskOnDisk + 1]}
+                update -> update {[TransferToDisk > 0; TransferToDisk := TransferToDisk - 1; TaskOnDisk := TaskOnDisk + 1; DiskControllerUnit := DiskControllerUnit + 1; TaskReady := TaskReady + 1]}
+                update -> update {[TaskSuspended > 0 and DiskControllerUnit > 0 and TaskOnDisk > 0; TaskSuspended := TaskSuspended - 1; DiskControllerUnit := DiskControllerUnit - 1; TaskOnDisk := TaskOnDisk - 1; TransferToDisk := TransferToDisk + 1]}
+                update -> update {[TaskReady > 0 and CPUUnit > 0; TaskReady := TaskReady - 1; CPUUnit := CPUUnit - 1; ExecutingTask := ExecutingTask + 1]}
+                update -> update {[CPUUnit > 0 and TaskSuspended > 0; CPUUnit := CPUUnit - 1; TaskSuspended := TaskSuspended - 1; ExecutingTask := ExecutingTask + 1]}
+                update -> update {[ExecutingTask > 0; ExecutingTask := ExecutingTask - 1; CPUUnit := CPUUnit + 1; TaskSuspended := TaskSuspended + 1]}
+                update -> update {[TaskReady > 0; TaskReady := TaskReady - 1; FreeMemSegment := FreeMemSegment + 1]}
+        }
+	}
+
+  objects
+    globalObject : GlobalClass()
+}

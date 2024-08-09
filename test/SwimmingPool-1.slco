@@ -1,0 +1,23 @@
+model PetriNetModel {
+  classes
+    GlobalClass {
+      variables
+        Integer Entered := 0, Integer WaitBag := 0, Integer Undress := 0, Integer InBath := 0, Integer Dress := 0, Integer Dressed := 0, Integer Out := 20, Integer Cabins := 10, Integer Bags := 15
+	  
+      state machines
+        SM { 
+            initial update states 
+            transitions
+                update -> update {[Entered > 0 and Cabins > 0; Entered := Entered - 1; Cabins := Cabins - 1; WaitBag := WaitBag + 1]}
+                update -> update {[WaitBag > 0 and Bags > 0; WaitBag := WaitBag - 1; Bags := Bags - 1; Undress := Undress + 1]}
+                update -> update {[Undress > 0; Undress := Undress - 1; Cabins := Cabins + 1; InBath := InBath + 1]}
+                update -> update {[Cabins > 0 and InBath > 0; Cabins := Cabins - 1; InBath := InBath - 1; Dress := Dress + 1]}
+                update -> update {[Dress > 0; Dress := Dress - 1; Bags := Bags + 1; Dressed := Dressed + 1]}
+                update -> update {[Dressed > 0; Dressed := Dressed - 1; Out := Out + 1; Cabins := Cabins + 1]}
+                update -> update {[Out > 0; Out := Out - 1; Entered := Entered + 1]}
+        }
+	}
+
+  objects
+    globalObject : GlobalClass()
+}
